@@ -10,6 +10,7 @@ description:    Pact language server
 author:         John Wiegley
 maintainer:     john@kadena.io
 license:        BSD3
+license-file:   LICENSE
 build-type:     Simple
 
 library
@@ -33,6 +34,7 @@ library
     , free
     , lens
     , lsp
+    , lsp-types
     , megaparsec
     , mtl
     , pretty
@@ -69,6 +71,7 @@ executable pact-lsp
     , free
     , lens
     , lsp
+    , lsp-types
     , megaparsec
     , mtl
     , optparse-applicative
@@ -106,17 +109,24 @@ test-suite pact-lsp-tests
     , constraints
     , containers
     , data-default
+    , directory
+    , filepath
     , free
     , hedgehog
     , here
+    , hspec
     , lens
     , lsp
+    , lsp-test
+    , lsp-types
     , megaparsec
     , mtl
     , pact-lsp
+    , parser-combinators
     , pretty
     , pretty-show
     , prettyprinter
+    , process
     , profunctors
     , semigroupoids
     , split
@@ -127,6 +137,7 @@ test-suite pact-lsp-tests
     , text
     , time
     , transformers
+    , unliftio
     , unordered-containers
     , vector
   default-language: Haskell2010

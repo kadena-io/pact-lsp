@@ -22,6 +22,7 @@ dependencies:
   - free
   - lens
   - lsp
+  - lsp-types
   - megaparsec
   - mtl
   - pretty
@@ -48,7 +49,14 @@ tests:
     source-dirs: tests
     dependencies:
       - HUnit
+      - hspec
+      - directory
+      - filepath
+      - parser-combinators
+      - lsp-test
       - hedgehog
+      - process
+      - unliftio
       - here
       - tasty
       - tasty-hedgehog

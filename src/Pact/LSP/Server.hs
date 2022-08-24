@@ -26,7 +26,7 @@ To try out this server, install it with
 > cabal install lsp-demo-reactor-server -fdemo
 and plug it into your client of choice.
 -}
-module Pact.LSP.Server (main) where
+module Pact.LSP.Server where
 
 import           Colog.Core (LogAction (..), WithSeverity (..), Severity (..), (<&))
 import qualified Colog.Core as L
@@ -48,7 +48,6 @@ import           Language.LSP.Logging (defaultClientLogger)
 import qualified Language.LSP.Types            as J
 import qualified Language.LSP.Types.Lens       as J
 import           Language.LSP.VFS
-import           System.Exit
 import           Control.Concurrent
 
 
@@ -58,14 +57,6 @@ import           Control.Concurrent
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 -- ---------------------------------------------------------------------
 --
-
-main :: IO ()
-main = do
-  run >>= \case
-    0 -> exitSuccess
-    c -> exitWith . ExitFailure $ c
-
--- ---------------------------------------------------------------------
 
 data Config = Config { fooTheBar :: Bool, wibbleFactor :: Int }
   deriving (Generic, J.ToJSON, J.FromJSON, Show)
@@ -176,12 +167,12 @@ reactor logger inp = do
 lspHandlers :: (m ~ LspM Config) => L.LogAction m (WithSeverity T.Text) -> TChan ReactorInput -> Handlers m
 lspHandlers logger rin = mapHandlers goReq goNot (handle logger)
   where
-    goReq :: forall (a :: J.Method J.FromClient J.Request). Handler (LspM Config) a -> Handler (LspM Config) a
+    goReq :: forall (a :: J.Method 'J.FromClient 'J.Request). Handler (LspM Config) a -> Handler (LspM Config) a
     goReq f = \msg k -> do
       env <- getLspEnv
       liftIO $ atomically $ writeTChan rin $ ReactorAction (runLspT env $ f msg k)
 
-    goNot :: forall (a :: J.Method J.FromClient J.Notification). Handler (LspM Config) a -> Handler (LspM Config) a
+    goNot :: forall (a :: J.Method 'J.FromClient 'J.Notification). Handler (LspM Config) a -> Handler (LspM Config) a
     goNot f = \msg -> do
       env <- getLspEnv
       liftIO $ atomically $ writeTChan rin $ ReactorAction (runLspT env $ f msg)
@@ -191,7 +182,8 @@ handle :: (m ~ LspM Config) => L.LogAction m (WithSeverity T.Text) -> Handlers m
 handle logger = mconcat
   [ notificationHandler J.SInitialized $ \_msg -> do
       logger <& "Processing the Initialized notification" `WithSeverity` Info
-      
+
+{-
       -- We're initialized! Lets send a showMessageRequest now
       let params = J.ShowMessageRequestParams
                          J.MtWarning
@@ -206,14 +198,15 @@ handle logger = mconcat
 
             -- We can dynamically register a capability once the user accepts it
             sendNotification J.SWindowShowMessage (J.ShowMessageParams J.MtInfo "Turning on code lenses dynamically")
-            
+
             let regOpts = J.CodeLensRegistrationOptions Nothing Nothing (Just False)
-            
+
             void $ registerCapability J.STextDocumentCodeLens regOpts $ \_req responder -> do
               logger <& "Processing a textDocument/codeLens request" `WithSeverity` Info
               let cmd = J.Command "Say hello" "lsp-hello-command" Nothing
                   rsp = J.List [J.CodeLens (J.mkRange 0 0 0 100) (Just cmd) Nothing]
               responder (Right rsp)
+-}
 
   , notificationHandler J.STextDocumentDidOpen $ \msg -> do
     let doc  = msg ^. J.params . J.textDocument . J.uri

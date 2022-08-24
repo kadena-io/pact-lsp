@@ -56,11 +56,11 @@ pkgs.haskell.packages.${compiler}.developPackage {
         sha256 = "17dknzpxlzv6qz70c8cificard955lcsb787iq9g4bpcifyd71db";
       } {};
 
-      lsp-test = self.callHackageDirect {
+      lsp-test = dontCheck (self.callHackageDirect {
         pkg = "lsp-test";
-        ver = "1.5.0.0";
-        sha256 = "048h3xkz52j1am33lm5bm0zkc8vva5k83r0k2xr5h8w0yii0bfgs";
-      } {};
+        ver = "0.14.0.3";
+        sha256 = "1mmdkjb4j108850lp0ar4a3rljpdbjp2yqpv0ks2kq7xakyp4x2d";
+      } {});
 
       hashable     = doJailbreak super.hashable;
       rebase       = doJailbreak super.rebase;
