@@ -1,0 +1,132 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.7.
+--
+-- see: https://github.com/sol/hpack
+
+name:           pact-lsp
+version:        0.0.1
+description:    Pact language server
+author:         John Wiegley
+maintainer:     john@kadena.io
+license:        BSD3
+build-type:     Simple
+
+library
+  exposed-modules:
+      Pact.LSP.Server
+  other-modules:
+      Paths_pact_lsp
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wno-missing-home-modules
+  build-depends:
+      aeson
+    , base >=4.5 && <5.0
+    , bytestring
+    , cassava
+    , co-log-core
+    , comonad
+    , constraints
+    , containers
+    , data-default
+    , free
+    , lens
+    , lsp
+    , megaparsec
+    , mtl
+    , pretty
+    , pretty-show
+    , prettyprinter
+    , profunctors
+    , semigroupoids
+    , split
+    , stm
+    , text
+    , time
+    , transformers
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+executable pact-lsp
+  main-is: Main.hs
+  other-modules:
+      Paths_pact_lsp
+  hs-source-dirs:
+      bin
+  ghc-options: -Wall -Wno-missing-home-modules
+  build-depends:
+      aeson
+    , base >=4.5 && <5.0
+    , bytestring
+    , cassava
+    , co-log-core
+    , comonad
+    , constraints
+    , containers
+    , data-default
+    , free
+    , lens
+    , lsp
+    , megaparsec
+    , mtl
+    , optparse-applicative
+    , pact-lsp
+    , pretty
+    , pretty-show
+    , prettyprinter
+    , profunctors
+    , semigroupoids
+    , split
+    , stm
+    , text
+    , time
+    , transformers
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+test-suite pact-lsp-tests
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Paths_pact_lsp
+  hs-source-dirs:
+      tests
+  ghc-options: -Wall -Wno-missing-home-modules
+  build-depends:
+      HUnit
+    , aeson
+    , base >=4.5 && <5.0
+    , bytestring
+    , cassava
+    , co-log-core
+    , comonad
+    , constraints
+    , containers
+    , data-default
+    , free
+    , hedgehog
+    , here
+    , lens
+    , lsp
+    , megaparsec
+    , mtl
+    , pact-lsp
+    , pretty
+    , pretty-show
+    , prettyprinter
+    , profunctors
+    , semigroupoids
+    , split
+    , stm
+    , tasty
+    , tasty-hedgehog
+    , tasty-hunit
+    , text
+    , time
+    , transformers
+    , unordered-containers
+    , vector
+  default-language: Haskell2010

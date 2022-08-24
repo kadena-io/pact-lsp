@@ -1,0 +1,64 @@
+name:        pact-lsp
+version:     0.0.1
+license:     BSD3
+author:      John Wiegley
+maintainer:  john@kadena.io
+description: Pact language server
+
+ghc-options:
+   - -Wall
+   - -Wno-missing-home-modules
+
+dependencies:
+  - base >= 4.5 && < 5.0
+  - aeson
+  - bytestring
+  - cassava
+  - co-log-core
+  - comonad
+  - constraints
+  - containers
+  - data-default
+  - free
+  - lens
+  - lsp
+  - megaparsec
+  - mtl
+  - pretty
+  - pretty-show
+  - prettyprinter
+  - profunctors
+  - semigroupoids
+  - split
+  - stm
+  - text
+  - time
+  - transformers
+  - unordered-containers
+  - vector
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Pact.LSP.Server
+
+tests:
+  pact-lsp-tests:
+    main: Main.hs
+    source-dirs: tests
+    dependencies:
+      - HUnit
+      - hedgehog
+      - here
+      - tasty
+      - tasty-hedgehog
+      - tasty-hunit
+      - pact-lsp
+
+executables:
+  pact-lsp:
+    main: Main.hs
+    source-dirs: bin
+    dependencies:
+      - optparse-applicative
+      - pact-lsp
