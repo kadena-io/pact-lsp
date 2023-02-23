@@ -37,6 +37,6 @@ main = hspec $ around withLSPServer $ do
       
     it "should send error diagnostic" $  \(hin, hout) ->
       runSessionWithHandles hin hout defaultConfig fullCaps "tests/data/" $ do
-      _ <- openDoc "test-fail.pact" "pact"
+      _ <- openDoc "test-fail.repl" "pact"
       diags <- waitForDiagnostics
       liftIO $ diags `shouldNotBe` []
