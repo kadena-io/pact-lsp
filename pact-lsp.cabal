@@ -33,6 +33,7 @@ library
     , text
     , process
     , parsec
+    , text-rope
   default-language: Haskell2010
 
 executable pact-lsp

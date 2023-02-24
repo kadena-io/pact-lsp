@@ -54,7 +54,7 @@ parseLine = do
       , manyTill anyChar (lookAhead (char ':')) $> (Nothing, False)
       ]
     ptrace = do
-      hh <- manyTill anyChar endOfLine
+      hh <- spaces *> manyTill anyChar endOfLine
       b <-  many $ do
         indent <- many1 space
         content <- manyTill anyChar endOfLine
