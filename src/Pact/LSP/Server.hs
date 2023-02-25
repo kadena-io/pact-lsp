@@ -41,6 +41,7 @@ runWith i o = do
       , documentSaveNotificationHandler
       , documentChangeNotificationHandler
       , workspaceChangeNotificationHandler
+      , hoverRequestHandler
       ]
     
     forward :: LanguageContextEnv ServerConfig -> HandlerM a -> IO a
