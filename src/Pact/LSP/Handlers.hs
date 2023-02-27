@@ -132,3 +132,42 @@ hoverRequestHandler = requestHandler STextDocumentHover $ \req resp -> do
       if exCode == ExitSuccess
         then resp (Right (Just Hover{..}))
         else resp (Right Nothing)
+
+
+completionRequestHandler :: Handlers HandlerM
+completionRequestHandler = requestHandler STextDocumentCompletion $ \req resp -> do
+   let
+    uri_ = req ^. params.textDocument.uri
+    pos  = req ^. params.position
+    
+   vfM <- liftLsp $ getVirtualFile (toNormalizedUri uri_)
+   symbols <- case vfM of
+      Nothing -> throwError (VirtualFileNotFound (T.pack (show uri_)))
+      Just (VirtualFile _ _ rope) ->
+        let
+          (_, l) = Rope.splitAtLine (fromIntegral (pos ^. line)) rope
+          (pre, _) = T.splitAt (fromIntegral (pos ^. character)) (Rope.toText l)
+          pref = T.takeWhileEnd (\s -> s /= '(' && s /= ' ') pre
+        in pure (L.filter (pref `T.isPrefixOf`) pactBuiltins)
+   if null symbols
+     then resp (Right (InR (CompletionList False (List []))))
+     else resp (Right (InR (CompletionList False (List (toComp <$> symbols)))))
+        
+   where
+     toComp str = CompletionItem str
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
