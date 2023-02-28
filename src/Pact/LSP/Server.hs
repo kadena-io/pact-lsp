@@ -6,6 +6,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Pact.LSP.Server where
 
@@ -21,8 +22,10 @@ import           Pact.LSP.Handlers
 import System.IO (Handle, stdin, stdout)
 import Colog.Core
 import qualified Colog.Core as L
-import Data.Text.Prettyprint.Doc (viaShow, Pretty (pretty))
+import Prettyprinter (viaShow, Pretty (pretty))
 import Language.LSP.Logging (defaultClientLogger)
+import Data.Aeson (Value(..))
+import qualified Data.Aeson.KeyMap as A
 
 run :: IO ()
 run = runWith stdin stdout
@@ -31,9 +34,14 @@ runWith :: Handle -> Handle -> IO ()
 runWith i o = do  
   let
     defaultConfig = ServerConfig {pactExe = "pact"}
-    onConfigurationChange _ new = case A.fromJSON new of
-                                      A.Success cfg -> Right cfg
-                                      A.Error msg   -> Left (T.pack msg)
+    onConfigurationChange old = \case
+      Object obj -> case A.lookup "pact" obj of
+        Just pactConf -> case A.fromJSON pactConf of
+                           A.Success cfg -> Right cfg
+                           A.Error msg   -> Left (T.pack msg)
+        Nothing -> Right old
+      _other -> Right old
+
     doInitialize env _ = pure (Right env)
     staticHandlers = mconcat
       [ initializeHandler

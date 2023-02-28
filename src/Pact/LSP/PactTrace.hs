@@ -28,9 +28,9 @@ parseLine = do
   pcolon
   (_severity, isCritical) <- pseverity
   pcolon
-  _message <- case isCritical of
-    True -> T.pack <$> manyTill anyChar (lookAhead (string "Load failed"))
-    False ->T.pack . unlines <$> ptrace
+  _message <- if isCritical
+    then T.pack <$> manyTill anyChar (lookAhead (string "Load failed"))
+    else T.pack . unlines <$> ptrace
 
   let
     _range = toRange ln col

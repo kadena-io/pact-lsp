@@ -23,8 +23,7 @@ import qualified Data.Text.Utf16.Rope as Rope
 import Data.Text.Utf16.Rope (Rope)
 import Control.Lens.Getter (view)
 import Control.Lens.Setter (set)
-import Control.Lens (over)
-import Data.Char (isSpace)
+import Data.Char (isSpace, isLetter)
 import qualified Data.List as L
 import System.Exit (ExitCode(ExitSuccess))
 
@@ -86,11 +85,16 @@ enhanceEndPos :: Rope -> Diagnostic -> Diagnostic
 enhanceEndPos rope diag = case textAfterPosM of
   Nothing -> diag
   Just txtAfter -> case endPos txtAfter of
-    (0, 0, colOffset, _) -> over (range.end.character) (+ (colOffset-1)) diag
-    (0, lOffset, colOffset, _) ->
-       let newEndPos = Position (pos ^. line + lOffset) colOffset
-       in set (range.end) newEndPos diag
-    _otherwise -> diag
+    -- single line case
+    (0, 0, colOffset, _) -> set (range.end.character) (pos ^. character + colOffset +1) diag
+    -- multiline case
+    (_, lOffset, colOffset, n) ->
+      if n < 64 then
+        let newEndPos = Position (pos ^. line + lOffset) colOffset
+        in set (range.end) newEndPos diag
+      else -- take keyword
+        let newEndOffset = min 16 (T.length (T.takeWhile isLetter txtAfter))
+        in  set (range.end.character) (pos ^. character + fromIntegral newEndOffset +1) diag  
   where
     pos = view (range.start) diag
     ropePos = Rope.Position (fromIntegral (_line pos)) (fromIntegral (_character pos +1))
