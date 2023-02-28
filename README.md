@@ -10,7 +10,7 @@ The Pact language server currently supports the following features:
 
   - **Document diagnostics**
   Every time a file is opened or saved, the file is analyzed using the _pact executable_ and diagnostic information is supplied.
-  ![document diagnostic](./figs/diagnostic.png)
+  ![document diagnostic](./figs/diagnostics.png)
 
   - **Completion of natives**
   While typing, the LSP server provides completions for natives.
@@ -18,7 +18,7 @@ The Pact language server currently supports the following features:
   
   - **Documentation of natives**
   Hovering over natives populates the documentation.
-  ![documentation](./figs/documentation.png)
+  ![documentation](./figs/hover.png)
   
 
 ## Server Configuration
