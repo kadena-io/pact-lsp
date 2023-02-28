@@ -10,12 +10,15 @@ The Pact language server currently supports the following features:
 
   - **Document diagnostics**
   Every time a file is opened or saved, the file is analyzed using the _pact executable_ and diagnostic information is supplied.
+  ![document diagnostic](./figs/diagnostic.png)
 
   - **Completion of natives**
   While typing, the LSP server provides completions for natives.
+  ![completion](./figs/completion.png)
   
   - **Documentation of natives**
   Hovering over natives populates the documentation.
+  ![documentation](./figs/documentation.png)
   
 
 ## Server Configuration
@@ -47,6 +50,7 @@ Using [eglot](https://github.com/joaotavora/eglot):
 (add-hook 'pact-mode-hook 'eglot-ensure)
 ```
 
+![emacs](./figs/emacs.png)
 
 ### Vim
 
@@ -61,3 +65,5 @@ if (executable('pact-lsp'))
       \ })
 endif
 ```
+
+![vim](./figs/vim.png)
