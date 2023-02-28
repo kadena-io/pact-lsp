@@ -61,6 +61,7 @@ test-suite pact-lsp-tests
     , lsp-test
     , lsp-types
     , pact-lsp
+    , co-log-core
     , text
     , process
     , hspec

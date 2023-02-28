@@ -19,19 +19,22 @@ import qualified Language.LSP.Types as J
 
 import           Pact.LSP.Types
 import           Pact.LSP.Handlers
-import System.IO (Handle, stdin, stdout)
+import System.IO (Handle, stdin, stdout, withFile, IOMode (WriteMode))
 import Colog.Core
 import qualified Colog.Core as L
 import Prettyprinter (viaShow, Pretty (pretty))
 import Language.LSP.Logging (defaultClientLogger)
 import Data.Aeson (Value(..))
 import qualified Data.Aeson.KeyMap as A
+import System.Environment (getArgs)
 
 run :: IO ()
-run = runWith stdin stdout
+run = getArgs >>= \case
+  ["--debug"] -> withFile "pact-lsp-debug.log" WriteMode (runWith stdin stdout . L.logStringHandle)
+  _otherwise ->  runWith stdin stdout L.logStringStderr
 
-runWith :: Handle -> Handle -> IO ()
-runWith i o = do  
+runWith :: Handle -> Handle -> LogAction IO String -> IO ()
+runWith i o l = do
   let
     defaultConfig = ServerConfig {pactExe = "pact"}
     onConfigurationChange old = \case
@@ -69,9 +72,9 @@ runWith i o = do
     
   void (runServerWithHandles ioLogger lspLogger i o ServerDefinition{..})
   where
-    prettyMsg l = "[" <> viaShow (L.getSeverity l) <> "] " <> pretty (L.getMsg l)
+    prettyMsg m = "[" <> viaShow (L.getSeverity m) <> "] " <> pretty (L.getMsg m)
     ioLogger :: LogAction IO (WithSeverity LspServerLog)
-    ioLogger = L.cmap (show . prettyMsg) L.logStringStderr
+    ioLogger = L.cmap (show . prettyMsg) l
     lspLogger :: LogAction (LspM config) (WithSeverity LspServerLog)
     lspLogger =
       let clientLogger = L.cmap (fmap (T.pack . show . pretty)) defaultClientLogger

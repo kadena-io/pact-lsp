@@ -14,6 +14,7 @@ import Pact.LSP.Server (runWith)
 import System.IO
 import System.Process
 import Test.Hspec
+import qualified Colog.Core as L
 
 
 withLSPServer :: ((Handle, Handle) -> IO ()) -> IO ()
@@ -22,7 +23,7 @@ withLSPServer f = do
   (outR, outW) <- createPipe
 
   bracket
-    (forkIO $ runWith inR outW)
+    (forkIO $ runWith inR outW  L.logStringStderr)
     killThread
     (const (f (inW, outR)))
   

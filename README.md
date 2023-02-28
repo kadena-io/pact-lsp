@@ -34,6 +34,11 @@ server initialization by sending a configuration as follows:
 }
 ```
 
+## Troubleshooting
+
+The `pact-lsp` executable accepts the `--debug` flag to generate a log file which can be used to further
+debug issues.
+
 ## Editor Configuration
 
 ### Emacs
