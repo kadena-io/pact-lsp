@@ -1,0 +1,8 @@
+cradle:
+  cabal:
+  - path: "./src/"
+    component: "lib:pact-lsp"
+  - path: "./tests/"
+    component: "test:pact-lsp-tests"
+  - path: "./bin/"
+    component: "exe:pact-lsp"
