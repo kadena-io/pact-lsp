@@ -55,7 +55,8 @@ test-suite pact-lsp-tests
       Paths_pact_lsp
   hs-source-dirs:
       tests
-  ghc-options: -Wall -Wno-missing-home-modules
+
+  ghc-options: -Wall -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.5 && <5.0
     , lsp-test
@@ -66,4 +67,7 @@ test-suite pact-lsp-tests
     , process
     , hspec
     , lens
+    , directory
+    , parsec
+    , temporary
   default-language: Haskell2010

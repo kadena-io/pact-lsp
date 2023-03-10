@@ -60,7 +60,7 @@ documentDiagnostics _uri = do
   vfRope <- case vfM of
     Nothing -> throwError (VirtualFileNotFound (T.pack (show nuri)))
     Just (VirtualFile _ _ rope) -> pure rope
-  
+
   _diagnostics <- case nfp of
     Nothing -> throwError (UnkownError ("Error reading " <> T.pack (show nfp)))
     Just fp -> do
@@ -71,8 +71,9 @@ documentDiagnostics _uri = do
       case parseDiagnostics stderr of
           Left err -> throwError (PactTraceParseError (T.pack (show err)))
           Right diagsRes -> do
-            let rawFileDiags = filter (\diag -> toNormalizedFilePath (fst diag) == fp) diagsRes
-                diags = enhanceEndPos vfRope <$> map snd rawFileDiags
+            let
+              rawFileDiags = filter (\diag -> toNormalizedFilePath (fst diag) == fp) diagsRes
+              diags = enhanceEndPos vfRope <$> map snd rawFileDiags
             pure (List diags)
   let
      _version = Nothing
@@ -94,12 +95,12 @@ enhanceEndPos rope diag = case textAfterPosM of
         in set (range.end) newEndPos diag
       else -- take keyword
         let newEndOffset = min 16 (T.length (T.takeWhile isLetter txtAfter))
-        in  set (range.end.character) (pos ^. character + fromIntegral newEndOffset +1) diag  
+        in  set (range.end.character) (pos ^. character + fromIntegral newEndOffset +1) diag
   where
     pos = view (range.start) diag
     ropePos = Rope.Position (fromIntegral (_line pos)) (fromIntegral (_character pos +1))
     textAfterPosM = Rope.toText . snd <$> Rope.splitAtPosition ropePos rope
-    
+
     accum '(' (open, lineCount, charCount, total) = (open+1, lineCount, charCount+1, total+1)
     accum ')' (open, lineCount, charCount, total) = (open-1, lineCount, charCount+1, total+1)
     accum '\n' (open, lineCount, _, total) = (open, lineCount+1, 0, total+1)
@@ -112,7 +113,7 @@ hoverRequestHandler = requestHandler STextDocumentHover $ \req resp -> do
   let
     uri_ = req ^. params.textDocument.uri
     pos  = req ^. params.position
-    
+
   srvCfg <-liftLsp getConfig
   vfM <- liftLsp $ getVirtualFile (toNormalizedUri uri_)
   mSymbol <- case vfM of
@@ -132,7 +133,7 @@ hoverRequestHandler = requestHandler STextDocumentHover $ \req resp -> do
       (exCode, stdout, _) <- liftIO $ readProcessWithExitCode (pactExe srvCfg) [] (T.unpack sym)
       let _contents = HoverContents (MarkupContent MkPlainText (T.pack stdout))
           _range = Nothing
-          
+
       if exCode == ExitSuccess
         then resp (Right (Just Hover{..}))
         else resp (Right Nothing)
@@ -143,7 +144,7 @@ completionRequestHandler = requestHandler STextDocumentCompletion $ \req resp ->
    let
     uri_ = req ^. params.textDocument.uri
     pos  = req ^. params.position
-    
+
    vfM <- liftLsp $ getVirtualFile (toNormalizedUri uri_)
    symbols <- case vfM of
       Nothing -> throwError (VirtualFileNotFound (T.pack (show uri_)))
@@ -156,7 +157,7 @@ completionRequestHandler = requestHandler STextDocumentCompletion $ \req resp ->
    if null symbols
      then resp (Right (InR (CompletionList False (List []))))
      else resp (Right (InR (CompletionList False (List (toComp <$> symbols)))))
-        
+
    where
      toComp str = CompletionItem str
        Nothing
