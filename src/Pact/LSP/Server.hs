@@ -50,6 +50,7 @@ runWith i o l = do
     staticHandlers = mconcat
       [ initializeHandler
       , documentOpenNotificationHandler
+      , documentCloseNotificationHandler
       , documentSaveNotificationHandler
       , documentChangeNotificationHandler
       , workspaceChangeNotificationHandler
@@ -87,5 +88,5 @@ runWith i o l = do
       , _change = Just TdSyncIncremental
       , _willSave = Just False
       , _willSaveWaitUntil = Just False
-      , _save = Nothing
+      , _save = Just (J.InR (J.SaveOptions (Just True)))
       }

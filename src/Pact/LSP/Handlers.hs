@@ -44,6 +44,9 @@ documentOpenNotificationHandler = notificationHandler STextDocumentDidOpen $ \ms
   let _uri = msg ^. params.textDocument.uri
   documentDiagnostics _uri
 
+documentCloseNotificationHandler :: Handlers HandlerM
+documentCloseNotificationHandler = notificationHandler STextDocumentDidClose $ const (pure ())
+
 documentSaveNotificationHandler :: Handlers HandlerM
 documentSaveNotificationHandler = notificationHandler STextDocumentDidSave $ \msg -> do
   let _uri = msg^.params.textDocument.uri
