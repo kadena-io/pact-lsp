@@ -27,6 +27,7 @@ import Language.LSP.Logging (defaultClientLogger)
 import Data.Aeson (Value(..))
 import qualified Data.Aeson.KeyMap as A
 import System.Environment (getArgs)
+import Language.LSP.Types (TextDocumentSyncOptions (..), TextDocumentSyncKind (TdSyncIncremental))
 
 run :: IO ()
 run = getArgs >>= \case
@@ -49,6 +50,7 @@ runWith i o l = do
     staticHandlers = mconcat
       [ initializeHandler
       , documentOpenNotificationHandler
+      , documentCloseNotificationHandler
       , documentSaveNotificationHandler
       , documentChangeNotificationHandler
       , workspaceChangeNotificationHandler
@@ -68,7 +70,7 @@ runWith i o l = do
             Right a -> pure a
 
     interpretHandler e = Iso (forward e) liftIO
-    options = defaultOptions
+    options = defaultOptions{textDocumentSync = Just syncOpt}
     
   void (runServerWithHandles ioLogger lspLogger i o ServerDefinition{..})
   where
@@ -79,3 +81,12 @@ runWith i o l = do
     lspLogger =
       let clientLogger = L.cmap (fmap (T.pack . show . pretty)) defaultClientLogger
       in clientLogger <> L.hoistLogAction liftIO ioLogger
+
+    syncOpt :: TextDocumentSyncOptions
+    syncOpt = TextDocumentSyncOptions
+      { _openClose = Just True
+      , _change = Just TdSyncIncremental
+      , _willSave = Just False
+      , _willSaveWaitUntil = Just False
+      , _save = Just (J.InR (J.SaveOptions (Just True)))
+      }
