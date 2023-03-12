@@ -3,6 +3,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main (main) where
 
@@ -23,6 +24,9 @@ import Data.List (isSuffixOf)
 import Text.Parsec (parse, (<|>), manyTill, space, string, spaces)
 import Text.Parsec.Char (char, letter)
 import System.IO.Temp (withTempDirectory)
+import Language.LSP.Types (Diagnostic (..), DiagnosticSeverity (..), Position (..), Range (..))
+import Data.Text (Text)
+import qualified Data.Text as T
 
 withLSPServer :: ((Handle, Handle) -> IO ()) -> IO ()
 withLSPServer f = do
@@ -33,7 +37,19 @@ withLSPServer f = do
     (forkIO $ runWith inR outW  L.logStringStderr)
     killThread
     (const (f (inW, outR)))
+
+toDiagnostic :: Position -> DiagnosticSeverity -> Text -> Diagnostic
+toDiagnostic beg@Position{..} s msg = Diagnostic
+  { _range = Range beg (Position _line  (_character + 3))
+  , _code  = Nothing
+  , _source = Nothing
+  , _tags = Nothing
+  , _relatedInformation = Nothing
+  , _message = msg
+  , _severity = Just s
+  }
   
+
 main :: IO ()
 main = do
   hspec $ around withLSPServer $ do
@@ -60,7 +76,13 @@ main = do
             , "pact/offchain.pact:141:0:Trace: [\"TableCreated\" \"TableCreated\"]"
             , "pact/offchain.repl:46:0:Trace: Commit Tx 2"
             , "Load successful"]
-        parseDiagnostics ex1 `shouldSatisfy` isRight
+
+        parseDiagnostics ex1 `shouldBe`
+          Right [ ("pact/offchain.pact", toDiagnostic (Position 11 0) DsInfo "Loaded module n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.offchain, hash POpawqVzqc0UVwZfMk8y0Q9jVk00Hk4aAlQWyDjF58Y" )
+                , ("pact/offchain.pact", toDiagnostic (Position 138 0) DsInfo "true")
+                , ("pact/offchain.pact", toDiagnostic (Position 140 0) DsInfo "[\"TableCreated\" \"TableCreated\"]")
+                , ("pact/offchain.repl", toDiagnostic (Position  45 0) DsInfo "Commit Tx 2\n")
+                ]
 
         let
           ex2 = unlines
@@ -68,7 +90,10 @@ main = do
             , ":OutputFailure: pact/offchain.pact:58:17: could not parse (!= public-key \"\"): couldn't find property variable public-key"
             , "Load failed"
             ]
-        parseDiagnostics ex2 `shouldSatisfy` isRight
+        parseDiagnostics ex2 `shouldBe`
+          Right [ ("pact/offchain.repl", toDiagnostic (Position 46 1) DsInfo (T.unlines
+                                                                               [ "Verification of n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.offchain failed"
+                                                                               , ":OutputFailure: pact/offchain.pact:58:17: could not parse (!= public-key \"\"): couldn't find property variable public-key"]))]
 
         
         parseDiagnostics "Load successful" `shouldSatisfy` isRight

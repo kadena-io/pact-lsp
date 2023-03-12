@@ -21,9 +21,10 @@ parseDiagnostics = parse ((parseEnding $> []) <|> (sepBy parseEntry newline <* p
 parseEnding :: Parser ()
 parseEnding = string "Load " >> (string "successful"  <|> string "failed") $> ()
 
-parseEntry :: Parser (FilePath, Diagnostic)
+parseEntry :: Parser ParsedDiagnostic
 parseEntry = do
   (fp, ln, col, _severity) <- pInfo
+  spaces
   msg <- many (notFollowedBy (void parseEnding <|> void (newline >> pInfo)) *> anyChar)
   let
     _range = toRange ln col
