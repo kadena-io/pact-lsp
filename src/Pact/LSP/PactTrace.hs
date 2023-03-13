@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | 
 
 module Pact.LSP.PactTrace where
@@ -12,51 +13,46 @@ import qualified Data.Text as T
 import Control.Monad (void)
 import Data.Functor (($>))
 
-parseDiagnostics :: String -> Either ParseError [(FilePath, Diagnostic)]
-parseDiagnostics = parse p "repl"
-  where
-    ppass = string "Load successful"
-    pfail = string "Load failed"
-    p = many (try parseLine) <* (try ppass <|> pfail)
+type ParsedDiagnostic = (FilePath, Diagnostic)
 
-parseLine :: Parser (FilePath, Diagnostic)
-parseLine = do
-  fp <-  manyTill anyChar (char ':')
-  ln <- read <$> many1 digit
-  pcolon
-  col <- read <$> many1 digit
-  pcolon
-  (_severity, isCritical) <- pseverity
-  pcolon
-  _message <- if isCritical
-    then T.pack <$> manyTill anyChar (lookAhead (string "Load failed"))
-    else T.pack . unlines <$> ptrace
+parseDiagnostics :: String -> Either ParseError [ParsedDiagnostic]
+parseDiagnostics = parse ((parseEnding $> []) <|> (sepBy parseEntry newline <* parseEnding)) "repl"
 
+parseEnding :: Parser ()
+parseEnding = string "Load " >> (string "successful"  <|> string "failed") $> ()
+
+parseEntry :: Parser ParsedDiagnostic
+parseEntry = do
+  (fp, ln, col, _severity) <- pInfo
+  spaces
+  msg <- many (notFollowedBy (void parseEnding <|> void (newline >> pInfo)) *> anyChar)
   let
     _range = toRange ln col
     _code = Nothing
     _source = Nothing
     _tags = Nothing
     _relatedInformation = Nothing
+    _message = T.pack msg
   pure (fp, Diagnostic{..})
+  
   where
-    toRange ln col =
-      let ln' = ln-1 in Range (Position ln' col) (Position ln' (col+3))
-
-    string' str = try (string str)
     pcolon = void (char ':')
-    pseverity = choice
-      [ string' "OutputWarning" $> (Just DsWarning, False)
-      , string' "OutputFailure" $> (Just DsError, False)
-      , string' "Trace"         $> (Just DsInfo, False)
-      , string' "Error"         $> (Just DsError, False)
-      , string' " error"        $> (Just DsError, True)
-      , manyTill anyChar (lookAhead (char ':')) $> (Nothing, False)
+    string' str = try (string str)
+    parseSeverity = choice
+      [ string' "OutputWarning" $> DsWarning
+      , string' "OutputFailure" $> DsError
+      , string' "Trace"         $> DsInfo
+      , string' "Error"         $> DsError
+      , string' " error"        $> DsError
       ]
-    ptrace = do
-      hh <- spaces *> manyTill anyChar endOfLine
-      b <-  many $ do
-        indent <- many1 space
-        content <- manyTill anyChar endOfLine
-        pure (indent ++ content)
-      pure (hh : b)
+    toRange ln col = let ln' = ln-1
+                     in Range (Position ln' col) (Position ln' (col+3))
+    pInfo = do
+      fp <- many1 (noneOf ":\n")
+      pcolon
+      ln <- read <$> many1 digit
+      pcolon
+      col <- read <$> many1 digit
+      pcolon
+      serv <- optionMaybe $ parseSeverity <*  pcolon
+      pure (fp, ln, col, serv)

@@ -1,0 +1,3 @@
+[submodule "tests/data/pact-corpus"]
+	path = tests/data/pact-corpus
+	url = git@github.com:kadena-io/pact-corpus.git
