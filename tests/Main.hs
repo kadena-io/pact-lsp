@@ -48,7 +48,7 @@ toDiagnostic beg@Position{..} s msg = Diagnostic
   , _message = msg
   , _severity = Just s
   }
-  
+
 
 main :: IO ()
 main = do
@@ -59,7 +59,7 @@ main = do
         _ <- openDoc "test.pact" "pact"
         diags <- waitForDiagnostics
         liftIO $ diags `shouldBe` []
-      
+
       it "should send error diagnostic" $  \(hin, hout) ->
         runSessionWithHandles hin hout defaultConfig fullCaps "tests/data/" $ do
         _ <- openDoc "test-fail.repl" "pact"
@@ -95,7 +95,21 @@ main = do
                                                                                [ "Verification of n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.offchain failed"
                                                                                , ":OutputFailure: pact/offchain.pact:58:17: could not parse (!= public-key \"\"): couldn't find property variable public-key"]))]
 
-        
+        let
+          ex3 = unlines
+            ["showcase.repl:1:0:Trace: Loading showcase.pact..."
+            ,"showcase.pact:1:0:Error: 1error"
+            ," at showcase.pact:1:0: (enforce false \"error\")"
+            ,"Load failed"
+            ]
+
+        parseDiagnostics ex3 `shouldBe`
+          Right [("showcase.repl", toDiagnostic (Position 0 0) DsInfo "Loading showcase.pact...")
+                ,("showcase.pact", toDiagnostic (Position 0 0) DsError (T.unlines
+                                                                       ["1error"
+                                                                       ," at showcase.pact:1:0: (enforce false \"error\")"]))]
+
+
         parseDiagnostics "Load successful" `shouldSatisfy` isRight
 
   hspec $ parallel $ do

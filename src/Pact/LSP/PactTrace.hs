@@ -34,7 +34,7 @@ parseEntry = do
     _relatedInformation = Nothing
     _message = T.pack msg
   pure (fp, Diagnostic{..})
-  
+
   where
     pcolon = void (char ':')
     string' str = try (string str)
@@ -43,12 +43,11 @@ parseEntry = do
       , string' "OutputFailure" $> DsError
       , string' "Trace"         $> DsInfo
       , string' "Error"         $> DsError
-      , string' " error"        $> DsError
       ]
     toRange ln col = let ln' = ln-1
                      in Range (Position ln' col) (Position ln' (col+3))
     pInfo = do
-      fp <- many1 (noneOf ":\n")
+      fp <- many1 (noneOf " :\n")
       pcolon
       ln <- read <$> many1 digit
       pcolon
