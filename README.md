@@ -55,6 +55,44 @@ Using [eglot](https://github.com/joaotavora/eglot):
 (add-hook 'pact-mode-hook 'eglot-ensure)
 ```
 
+Using [lsp-mode](https://emacs-lsp.github.io/lsp-mode/)
+
+
+```
+(require 'pact-mode)
+(require 'lsp-mode)
+
+(add-to-list 'lsp-language-id-configuration '(pact-mode . "pact"))
+  (lsp-register-client (make-lsp-client
+                           :new-connection (lsp-stdio-connection "pact-lsp")
+                           :activation-fn (lsp-activate-on "pact")
+                           :server-id 'pact-lsp
+                           :major-modes 'pact-mode)
+                       )
+ (add-hook 'pact-mode-hook 'lsp-deferred)
+  )
+
+```
+or, in [Doom Emacs](https://github.com/doomemacs/doomemacs)
+
+```
+(after! (:all pact-mode lsp-mode)
+  (add-to-list 'lsp-language-id-configuration '(pact-mode . "pact"))
+  (lsp-register-client (make-lsp-client
+                           :new-connection (lsp-stdio-connection "pact-lsp")
+                           :activation-fn (lsp-activate-on "pact")
+                           :server-id 'pact-lsp
+                           :major-modes 'pact-mode)
+                       )
+  )
+
+(after! pact-mode
+  (add-hook 'pact-mode-hook (lambda () (lsp-deferred)))
+  )
+
+
+```
+
 ![emacs](./figs/emacs.png)
 
 ### Vim
