@@ -54,6 +54,7 @@ runWith i o l = do
       , documentSaveNotificationHandler
       , documentChangeNotificationHandler
       , workspaceChangeNotificationHandler
+      , workspaceDidChangeWatchedFilesHandler
       , hoverRequestHandler
       , completionRequestHandler
       ]
