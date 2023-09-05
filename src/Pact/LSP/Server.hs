@@ -2,7 +2,6 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE TypeInType            #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE BlockArguments #-}
@@ -15,7 +14,7 @@ import           Control.Monad.IO.Class
 import qualified Data.Aeson as A
 import qualified Data.Text as T
 import           Language.LSP.Server
-import qualified Language.LSP.Types as J
+import qualified Language.LSP.Protocol.Types as J
 
 import           Pact.LSP.Types
 import           Pact.LSP.Handlers
@@ -27,7 +26,7 @@ import Language.LSP.Logging (defaultClientLogger)
 import Data.Aeson (Value(..))
 import qualified Data.Aeson.KeyMap as A
 import System.Environment (getArgs)
-import Language.LSP.Types (TextDocumentSyncOptions (..), TextDocumentSyncKind (TdSyncIncremental))
+import Language.LSP.Protocol.Types (TextDocumentSyncOptions (..), TextDocumentSyncKind (TextDocumentSyncKind_Incremental))
 
 run :: IO ()
 run = getArgs >>= \case
@@ -38,7 +37,7 @@ runWith :: Handle -> Handle -> LogAction IO String -> IO ()
 runWith i o l = do
   let
     defaultConfig = ServerConfig {pactExe = "pact"}
-    onConfigurationChange old = \case
+    parseConfig old = \case
       Object obj -> case A.lookup "pact" obj of
         Just pactConf -> case A.fromJSON pactConf of
                            A.Success cfg -> Right cfg
@@ -46,8 +45,9 @@ runWith i o l = do
         Nothing -> Right old
       _other -> Right old
 
+    onConfigChange _ = pure ()
     doInitialize env _ = pure (Right env)
-    staticHandlers = mconcat
+    staticHandlers = const $ mconcat
       [ initializeHandler
       , documentOpenNotificationHandler
       , documentCloseNotificationHandler
@@ -57,7 +57,7 @@ runWith i o l = do
       , hoverRequestHandler
       , completionRequestHandler
       ]
-    
+
     forward :: LanguageContextEnv ServerConfig -> HandlerM a -> IO a
     forward env handler =
         runLspT env $ do
@@ -65,13 +65,14 @@ runWith i o l = do
           case res of
             Left errMsg -> do
               -- send user notification for failure
-              sendNotification J.SWindowLogMessage J.LogMessageParams{_xtype = J.MtError, _message = T.pack (show errMsg)}
+              -- sendNotification Method_WindowLogMessage J.LogMessageParams{_type_ = J.MtError, _message = T.pack (show errMsg)}
               liftIO (fail (show errMsg))
             Right a -> pure a
 
     interpretHandler e = Iso (forward e) liftIO
-    options = defaultOptions{textDocumentSync = Just syncOpt}
-    
+    options = defaultOptions{optTextDocumentSync = Just syncOpt}
+    configSection = ""
+
   void (runServerWithHandles ioLogger lspLogger i o ServerDefinition{..})
   where
     prettyMsg m = "[" <> viaShow (L.getSeverity m) <> "] " <> pretty (L.getMsg m)
@@ -85,7 +86,7 @@ runWith i o l = do
     syncOpt :: TextDocumentSyncOptions
     syncOpt = TextDocumentSyncOptions
       { _openClose = Just True
-      , _change = Just TdSyncIncremental
+      , _change = Just TextDocumentSyncKind_Incremental
       , _willSave = Just False
       , _willSaveWaitUntil = Just False
       , _save = Just (J.InR (J.SaveOptions (Just True)))

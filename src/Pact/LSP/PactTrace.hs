@@ -6,9 +6,9 @@
 
 module Pact.LSP.PactTrace where
 
-import Text.Parsec
+import Text.Parsec hiding (string')
 import Text.ParserCombinators.Parsec (Parser)
-import Language.LSP.Types (Diagnostic (..), Range (Range), Position (Position), DiagnosticSeverity (..))
+import Language.LSP.Protocol.Types (Diagnostic (..), Range (Range), Position (Position), DiagnosticSeverity (..))
 import qualified Data.Text as T
 import Control.Monad (void)
 import Data.Functor (($>))
@@ -32,18 +32,19 @@ parseEntry = do
     _source = Nothing
     _tags = Nothing
     _relatedInformation = Nothing
+    _codeDescription = Nothing
+    _data_ = Nothing
     _message = T.pack msg
   pure (fp, Diagnostic{..})
-  
   where
     pcolon = void (char ':')
     string' str = try (string str)
     parseSeverity = choice
-      [ string' "OutputWarning" $> DsWarning
-      , string' "OutputFailure" $> DsError
-      , string' "Trace"         $> DsInfo
-      , string' "Error"         $> DsError
-      , string' " error"        $> DsError
+      [ string' "OutputWarning" $> DiagnosticSeverity_Warning
+      , string' "OutputFailure" $> DiagnosticSeverity_Error
+      , string' "Trace"         $> DiagnosticSeverity_Information
+      , string' "Error"         $> DiagnosticSeverity_Error
+      , string' " error"        $> DiagnosticSeverity_Error
       ]
     toRange ln col = let ln' = ln-1
                      in Range (Position ln' col) (Position ln' (col+3))

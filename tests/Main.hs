@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeInType #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -24,7 +23,7 @@ import Data.List (isSuffixOf)
 import Text.Parsec (parse, (<|>), manyTill, space, string, spaces)
 import Text.Parsec.Char (char, letter)
 import System.IO.Temp (withTempDirectory)
-import Language.LSP.Types (Diagnostic (..), DiagnosticSeverity (..), Position (..), Range (..))
+import Language.LSP.Protocol.Types (Diagnostic (..), DiagnosticSeverity (..), Position (..), Range (..))
 import Data.Text (Text)
 import qualified Data.Text as T
 
@@ -47,8 +46,9 @@ toDiagnostic beg@Position{..} s msg = Diagnostic
   , _relatedInformation = Nothing
   , _message = msg
   , _severity = Just s
+  , _data_ = Nothing
+  , _codeDescription = Nothing
   }
-  
 
 main :: IO ()
 main = do
@@ -59,7 +59,7 @@ main = do
         _ <- openDoc "test.pact" "pact"
         diags <- waitForDiagnostics
         liftIO $ diags `shouldBe` []
-      
+
       it "should send error diagnostic" $  \(hin, hout) ->
         runSessionWithHandles hin hout defaultConfig fullCaps "tests/data/" $ do
         _ <- openDoc "test-fail.repl" "pact"
@@ -78,10 +78,11 @@ main = do
             , "Load successful"]
 
         parseDiagnostics ex1 `shouldBe`
-          Right [ ("pact/offchain.pact", toDiagnostic (Position 11 0) DsInfo "Loaded module n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.offchain, hash POpawqVzqc0UVwZfMk8y0Q9jVk00Hk4aAlQWyDjF58Y" )
-                , ("pact/offchain.pact", toDiagnostic (Position 138 0) DsInfo "true")
-                , ("pact/offchain.pact", toDiagnostic (Position 140 0) DsInfo "[\"TableCreated\" \"TableCreated\"]")
-                , ("pact/offchain.repl", toDiagnostic (Position  45 0) DsInfo "Commit Tx 2\n")
+          Right [ ("pact/offchain.pact", toDiagnostic (Position 11 0) DiagnosticSeverity_Information
+                    "Loaded module n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.offchain, hash POpawqVzqc0UVwZfMk8y0Q9jVk00Hk4aAlQWyDjF58Y" )
+                , ("pact/offchain.pact", toDiagnostic (Position 138 0) DiagnosticSeverity_Information "true")
+                , ("pact/offchain.pact", toDiagnostic (Position 140 0) DiagnosticSeverity_Information "[\"TableCreated\" \"TableCreated\"]")
+                , ("pact/offchain.repl", toDiagnostic (Position  45 0) DiagnosticSeverity_Information "Commit Tx 2\n")
                 ]
 
         let
@@ -91,11 +92,11 @@ main = do
             , "Load failed"
             ]
         parseDiagnostics ex2 `shouldBe`
-          Right [ ("pact/offchain.repl", toDiagnostic (Position 46 1) DsInfo (T.unlines
+          Right [ ("pact/offchain.repl", toDiagnostic (Position 46 1) DiagnosticSeverity_Information (T.unlines
                                                                                [ "Verification of n_bd7f56c0bc111ea42026912c37ff5da89149d9dc.offchain failed"
                                                                                , ":OutputFailure: pact/offchain.pact:58:17: could not parse (!= public-key \"\"): couldn't find property variable public-key"]))]
 
-        
+
         parseDiagnostics "Load successful" `shouldSatisfy` isRight
 
   hspec $ parallel $ do
