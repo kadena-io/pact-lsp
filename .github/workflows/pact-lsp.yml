@@ -6,8 +6,8 @@ jobs:
     strategy:
       matrix:
         ghc: ['9.6.2']
-        cabal: ['3.0.0.0']
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        cabal: ['3.10.0.0']
+        os: [ubuntu-latest, macOS-latest]
 
     name: Haskell GHC ${{ matrix.ghc }} sample
     steps:
