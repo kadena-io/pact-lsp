@@ -27,6 +27,7 @@ import Data.Aeson (Value(..))
 import qualified Data.Aeson.KeyMap as A
 import System.Environment (getArgs)
 import Language.LSP.Protocol.Types (TextDocumentSyncOptions (..), TextDocumentSyncKind (TextDocumentSyncKind_Incremental))
+import Language.LSP.Protocol.Message
 
 run :: IO ()
 run = getArgs >>= \case
@@ -65,7 +66,7 @@ runWith i o l = do
           case res of
             Left errMsg -> do
               -- send user notification for failure
-              -- sendNotification Method_WindowLogMessage J.LogMessageParams{_type_ = J.MtError, _message = T.pack (show errMsg)}
+              sendNotification SMethod_WindowLogMessage J.LogMessageParams{_type_ = J.MessageType_Error, _message = T.pack (show errMsg)}
               liftIO (fail (show errMsg))
             Right a -> pure a
 
