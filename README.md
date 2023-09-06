@@ -34,6 +34,65 @@ server initialization by sending a configuration as follows:
 }
 ```
 
+## Building from Source
+
+### Dependencies
+- (Mac only) Homebrew: `brew install git`
+- (Linux/Mac) [Installer](https://git-scm.com/downloads)
+- Pact executable (see [Instructions](https://github.com/kadena-io/pact))
+
+To get the code, you can go [here](https://github.com/kadena-io/pact-lsp/releases/). Once you have the code, we can pick a build tool.
+
+#### Building with Cabal
+
+[Cabal](https://www.haskell.org/cabal/) is the preferred way to manage packages by the Haskell community. You will need a version of GHC
+installed on your machine to use it.
+
+##### Dependencies
+
+- `ghc >= 9.6` (Haskell compiler) and `cabal >= 2.2` (Haskell build-tool)
+  - The easiest way to get this is to install it using (Linux/Mac) [ghcup](https://www.haskell.org/ghcup/) and issue `ghcup install 9.6.2`, followed by `ghcup install-cabal`.
+  - ghc may also be installed via brew, issuing `brew install ghc` and `brew install cabal-install`.
+
+To build a Pact LSP binary:
+
+```bash
+# Only necessary if you haven't done this recently.
+cabal v2-update
+
+# Build the project.
+cabal v2-build
+```
+
+This will install a runnable version of the Pact LSP, which you can run via:
+
+```bash
+cabal v2-exec pact-lsp
+```
+
+Alternatively, running `cabal v2-install exe:pact-lsp` inside this repository's root will install the binary to `~/.cabal/bin/`, which
+you may need to add to your path. Then, you can call `pact-lsp` as-is.
+
+
+#### Building with Nix
+
+The fastest way to build and run Pact is to use the Nix package manager
+which has binary caching capabilities that allow you to download pre-built
+binaries for everything needed by Pact.
+We use nix flakes (which requires users to set `--experimental-features "nix-command flakes"`)
+to build pact and its dependencies. For detailed instructions see [our
+￼wiki](https://github.com/kadena-io/pact/wiki/Building-Kadena-Projects).
+
+To build the Pact executable:
+```bash
+nix build
+```
+When the build is finished, you can run the Pact LSP with the following command:
+
+```bash
+./result/bin/pact-lsp
+```
+
 ## Troubleshooting
 
 The `pact-lsp` executable accepts the `--debug` flag to generate a log file which can be used to further
