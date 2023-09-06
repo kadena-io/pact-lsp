@@ -5,9 +5,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        ghc: ['8.10.7']
-        cabal: ['3.0.0.0']
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        ghc: ['9.6.2']
+        cabal: ['3.10.1.0']
+        os: [ubuntu-latest, macOS-latest]
 
     name: Haskell GHC ${{ matrix.ghc }} sample
     steps:
@@ -26,4 +26,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: pact-lsp-${{matrix.os}}
-          path: dist/      
+          path: dist/

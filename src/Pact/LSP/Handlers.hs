@@ -8,9 +8,11 @@
 
 module Pact.LSP.Handlers where
 
-import Language.LSP.Types hiding (line)
 import Pact.LSP.Types
-import Language.LSP.Types.Lens
+import Language.LSP.Protocol.Lens
+import Language.LSP.Protocol.Types hiding (SemanticTokenAbsolute(..))
+import Language.LSP.Protocol.Message
+
 import Control.Monad.Trans (MonadTrans (..), liftIO)
 import qualified Data.Text as T
 import Control.Monad.Except (MonadError(..))
@@ -31,24 +33,24 @@ liftLsp :: LspT ServerConfig IO a -> HandlerM a
 liftLsp = HandlerM . lift
 
 initializeHandler :: Handlers HandlerM
-initializeHandler = notificationHandler SInitialized $ const (pure ())
+initializeHandler = notificationHandler SMethod_Initialized $ const (pure ())
 
 documentChangeNotificationHandler :: Handlers HandlerM
-documentChangeNotificationHandler = notificationHandler STextDocumentDidChange $ const (pure ())
+documentChangeNotificationHandler = notificationHandler SMethod_TextDocumentDidChange $ const (pure ())
 
 workspaceChangeNotificationHandler :: Handlers HandlerM
-workspaceChangeNotificationHandler = notificationHandler SWorkspaceDidChangeConfiguration $ const (pure ())
+workspaceChangeNotificationHandler = notificationHandler SMethod_WorkspaceDidChangeConfiguration $ const (pure ())
 
 documentOpenNotificationHandler :: Handlers HandlerM
-documentOpenNotificationHandler = notificationHandler STextDocumentDidOpen $ \msg -> do
+documentOpenNotificationHandler = notificationHandler SMethod_TextDocumentDidOpen $ \msg -> do
   let _uri = msg ^. params.textDocument.uri
   documentDiagnostics _uri
 
 documentCloseNotificationHandler :: Handlers HandlerM
-documentCloseNotificationHandler = notificationHandler STextDocumentDidClose $ const (pure ())
+documentCloseNotificationHandler = notificationHandler SMethod_TextDocumentDidClose $ const (pure ())
 
 documentSaveNotificationHandler :: Handlers HandlerM
-documentSaveNotificationHandler = notificationHandler STextDocumentDidSave $ \msg -> do
+documentSaveNotificationHandler = notificationHandler SMethod_TextDocumentDidSave $ \msg -> do
   let _uri = msg^.params.textDocument.uri
   documentDiagnostics _uri
 
@@ -77,10 +79,10 @@ documentDiagnostics _uri = do
             let
               rawFileDiags = filter (\diag -> toNormalizedFilePath (fst diag) == fp) diagsRes
               diags = enhanceEndPos vfRope <$> map snd rawFileDiags
-            pure (List diags)
+            pure diags
   let
      _version = Nothing
-  liftLsp (sendNotification STextDocumentPublishDiagnostics PublishDiagnosticsParams{..})
+  liftLsp (sendNotification SMethod_TextDocumentPublishDiagnostics PublishDiagnosticsParams{..})
 
 
 
@@ -112,7 +114,7 @@ enhanceEndPos rope diag = case textAfterPosM of
 
 
 hoverRequestHandler :: Handlers HandlerM
-hoverRequestHandler = requestHandler STextDocumentHover $ \req resp -> do
+hoverRequestHandler = requestHandler SMethod_TextDocumentHover  $ \req resp -> do
   let
     uri_ = req ^. params.textDocument.uri
     pos  = req ^. params.position
@@ -131,19 +133,18 @@ hoverRequestHandler = requestHandler STextDocumentHover $ \req resp -> do
         in pure (L.find (== sym) pactBuiltins)
 
   case mSymbol of
-    Nothing -> resp (Right Nothing)
+    Nothing -> resp (Right (InR Null))
     Just sym -> do
       (exCode, stdout, _) <- liftIO $ readProcessWithExitCode (pactExe srvCfg) [] (T.unpack sym)
-      let _contents = HoverContents (MarkupContent MkPlainText (T.pack stdout))
+      let _contents = InL $ MarkupContent MarkupKind_PlainText (T.pack stdout)
           _range = Nothing
 
       if exCode == ExitSuccess
-        then resp (Right (Just Hover{..}))
-        else resp (Right Nothing)
-
+        then resp (Right (InL Hover{..}))
+        else resp (Right (InR Null))
 
 completionRequestHandler :: Handlers HandlerM
-completionRequestHandler = requestHandler STextDocumentCompletion $ \req resp -> do
+completionRequestHandler = requestHandler SMethod_TextDocumentCompletion $ \req resp -> do
    let
     uri_ = req ^. params.textDocument.uri
     pos  = req ^. params.position
@@ -158,11 +159,13 @@ completionRequestHandler = requestHandler STextDocumentCompletion $ \req resp ->
           pref = T.takeWhileEnd (\s -> s /= '(' && s /= ' ') pre
         in pure (L.filter (pref `T.isPrefixOf`) pactBuiltins)
    if null symbols
-     then resp (Right (InR (CompletionList False (List []))))
-     else resp (Right (InR (CompletionList False (List (toComp <$> symbols)))))
+     then resp (Right (InL []))
+     else resp (Right (InL (toComp <$> symbols)))
 
    where
      toComp str = CompletionItem str
+       Nothing
+       Nothing
        Nothing
        Nothing
        Nothing

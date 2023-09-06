@@ -2,7 +2,7 @@
   description = "Kadena's Pact smart contract language";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?rev=7a94fcdda304d143f9a40006c033d7e190311b54";
+    nixpkgs.url = "github:NixOS/nixpkgs?rev=4d2b37a84fad1091b9de401eb450aae66f1a741e";
     # nixpkgs.follows = "haskellNix/nixpkgs-unstable";
     haskellNix.url = "github:input-output-hk/haskell.nix";
     flake-utils.url = "github:numtide/flake-utils";
@@ -25,9 +25,10 @@
           pact-lsp =
             final.haskell-nix.project' {
               src = ./.;
-              compiler-nix-name = "ghc8107";
+              compiler-nix-name = "ghc962";
               shell.tools = {
                 cabal = {};
+                haskell-language-server = {};
                 # hlint = {};
               };
               shell.buildInputs = with pkgs; [
@@ -41,7 +42,17 @@
             };
         })
       ];
-    in flake // {
+    in flake // rec {
       packages.default = flake.packages."pact-lsp:exe:pact-lsp";
+
+
+      devShell = pkgs.haskellPackages.shellFor {
+        buildInputs = with pkgs.haskellPackages; [
+          cabal-install
+          haskell-language-server
+        ];
+
+        withHoogle = true;
+      };
     });
 }
