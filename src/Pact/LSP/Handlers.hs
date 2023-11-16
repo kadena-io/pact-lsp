@@ -41,6 +41,9 @@ documentChangeNotificationHandler = notificationHandler SMethod_TextDocumentDidC
 workspaceChangeNotificationHandler :: Handlers HandlerM
 workspaceChangeNotificationHandler = notificationHandler SMethod_WorkspaceDidChangeConfiguration $ const (pure ())
 
+workspaceDidChangeWatchedFilesHandler :: Handlers HandlerM
+workspaceDidChangeWatchedFilesHandler = notificationHandler SWorkspaceDidChangeWatchedFiles $ const (pure ())
+
 documentOpenNotificationHandler :: Handlers HandlerM
 documentOpenNotificationHandler = notificationHandler SMethod_TextDocumentDidOpen $ \msg -> do
   let _uri = msg ^. params.textDocument.uri
