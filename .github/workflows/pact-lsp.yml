@@ -11,7 +11,7 @@ jobs:
 
     name: Haskell GHC ${{ matrix.ghc }} sample
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Haskell
         uses: haskell/actions/setup@v2
         with:
@@ -23,7 +23,7 @@ jobs:
           mkdir dist
           cabal install exe:pact-lsp --install-method=copy --overwrite-policy=always --installdir=dist
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pact-lsp-${{matrix.os}}
           path: dist/
